@@ -13,9 +13,9 @@
     
     <style>
         :root {
-            --primary: #0f172a;      /* Slate 900 */
+            --primary: #0f172a;       /* Slate 900 */
             --primary-light: #1e293b; /* Slate 800 */
-            --accent: #3b82f6;       /* Royal Blue */
+            --accent: #3b82f6;        /* Royal Blue */
             --accent-glow: rgba(59, 130, 246, 0.5);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
@@ -54,10 +54,16 @@
             align-items: center;
             padding: 30px 0;
             backdrop-filter: blur(10px);
+            overflow-y: auto; /* Allow scrolling sidebar on short screens */
         }
+        
+        /* Hide scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar { display: none; }
+        .sidebar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .logo-mark {
             width: 40px; height: 40px;
+            min-height: 40px;
             background: var(--accent);
             border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
@@ -78,6 +84,7 @@
             position: relative;
         }
         .nav-dot:hover { background: white; }
+        /* Adjusted active state to support range of slides (sub-chapters) if needed, currently 1:1 mapped to logic */
         .nav-dot.active { 
             background: var(--accent); 
             box-shadow: 0 0 10px var(--accent);
@@ -143,6 +150,11 @@
             position: absolute; inset: 0;
             background: linear-gradient(90deg, #0f172a 0%, rgba(15, 23, 42, 0.95) 50%, rgba(15, 23, 42, 0.7) 100%);
             z-index: 1;
+        }
+        
+        /* Interactive Question Overlay Style */
+        .overlay-question {
+             background: linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(59, 130, 246, 0.2) 100%);
         }
 
         /* --- Updated Tree Diagram (Flexbox Based) --- */
@@ -212,7 +224,7 @@
         .tf-child:only-child::after { display: none; }
         .tf-child:only-child::before { display: block; }
         
-        /* Parent Connector (Down line from node to children) */
+        /* Parent Connector */
         .tf-node-wrapper {
             display: flex;
             flex-direction: column;
@@ -223,7 +235,7 @@
             height: 20px;
             width: 2px;
             background: rgba(255,255,255,0.3);
-            display: block; /* Visible only if there are children below */
+            display: block;
         }
         .tf-node-wrapper:last-child::after { display: none; }
         .tf-node-wrapper.has-children::after { display: block; }
@@ -280,30 +292,116 @@
         .delay-2 { transition-delay: 0.3s; }
         .delay-3 { transition-delay: 0.5s; }
 
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        
+        /* Tablet & Small Laptop (Max 1024px) */
+        @media (max-width: 1024px) {
+            h1 { font-size: 3.5rem; }
+            h2 { font-size: 2.5rem; }
+            .slide-content { padding: 40px; }
+            
+            /* Stack flex rows */
+            .slide-content[style*="flex-direction: row"] {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 30px !important;
+            }
+            
+            /* Adjust charts container height when stacked */
+            .glass-card[style*="height: 500px"] {
+                height: 350px !important;
+            }
+        }
+
+        /* Mobile (Max 768px) */
+        @media (max-width: 768px) {
+            /* Move sidebar to bottom */
+            .sidebar {
+                top: auto; bottom: 0; left: 0; right: 0;
+                width: 100%; height: 60px;
+                flex-direction: row;
+                border-right: none;
+                border-top: 1px solid var(--glass-border);
+                padding: 0 20px;
+                justify-content: space-between;
+            }
+            
+            .nav-dots {
+                flex-direction: row;
+                gap: 15px;
+                overflow-x: auto;
+                padding-right: 20px;
+                align-items: center;
+                height: 100%;
+            }
+
+            .logo-mark {
+                margin-bottom: 0;
+                margin-right: 15px;
+                width: 30px; height: 30px;
+                min-height: 30px;
+                font-size: 14px;
+            }
+
+            .nav-dot::after { display: none; } /* Hide tooltips on mobile */
+
+            /* Adjust slides to account for bottom nav */
+            .slide {
+                left: 0; width: 100%;
+                height: calc(100% - 60px); /* Leave room for nav */
+            }
+
+            .slide-content {
+                padding: 20px;
+                justify-content: flex-start; /* Start from top on mobile */
+                overflow-y: auto;
+            }
+
+            h1 { font-size: 2.5rem; }
+            h2 { font-size: 1.8rem; }
+            h3 { font-size: 1rem; }
+            p { font-size: 0.95rem; }
+
+            .grid-2x2 { grid-template-columns: 1fr; }
+            
+            .controls {
+                bottom: 80px; /* Move above bottom nav */
+                right: 20px;
+                gap: 10px;
+            }
+            .btn-control { width: 45px; height: 45px; font-size: 1rem; }
+
+            /* Tree diagram responsive */
+            .tf-children { flex-wrap: wrap; gap: 20px; }
+            .tf-child::before, .tf-child::after { display: none; } /* Hide lines on complex mobile wraps if needed, or adjust */
+            .tf-node { min-width: 100px; padding: 8px 16px; font-size: 0.9rem; }
+        }
+
     </style>
 </head>
 <body>
 
 <div class="deck-container">
     
-    <!-- Sidebar Nav -->
+    <!-- Sidebar Nav (Updated Indices for New Slide Structure) -->
     <div class="sidebar">
         <div class="logo-mark">M</div>
         <div class="nav-dots">
             <div class="nav-dot active" onclick="gotoSlide(0)" data-title="Home"></div>
-            <div class="nav-dot" onclick="gotoSlide(1)" data-title="Market Basics"></div>
-            <div class="nav-dot" onclick="gotoSlide(2)" data-title="Banking 101"></div>
-            <div class="nav-dot" onclick="gotoSlide(3)" data-title="Segments"></div>
-            <div class="nav-dot" onclick="gotoSlide(4)" data-title="Trad. vs Equity"></div>
-            <div class="nav-dot" onclick="gotoSlide(5)" data-title="The Stock Market"></div>
-            <div class="nav-dot" onclick="gotoSlide(6)" data-title="Regulators"></div>
-            <div class="nav-dot" onclick="gotoSlide(7)" data-title="Index Basics"></div>
-            <div class="nav-dot" onclick="gotoSlide(8)" data-title="Major Indices"></div>
-            <div class="nav-dot" onclick="gotoSlide(9)" data-title="Complete"></div>
+            <!-- Jump to prompt slide indices -->
+            <div class="nav-dot" onclick="gotoSlide(1)" data-title="Trad. vs Equity"></div>
+            <div class="nav-dot" onclick="gotoSlide(3)" data-title="Banking 101"></div>
+            <div class="nav-dot" onclick="gotoSlide(5)" data-title="Market Basics"></div>
+            <div class="nav-dot" onclick="gotoSlide(7)" data-title="The Stock Market"></div>
+            <div class="nav-dot" onclick="gotoSlide(9)" data-title="Regulators"></div>
+            <div class="nav-dot" onclick="gotoSlide(11)" data-title="Segments"></div>
+            <div class="nav-dot" onclick="gotoSlide(13)" data-title="Index Basics"></div>
+            <div class="nav-dot" onclick="gotoSlide(15)" data-title="Major Indices"></div>
+            <div class="nav-dot" onclick="gotoSlide(17)" data-title="Complete"></div>
         </div>
     </div>
 
-    <!-- Slide 1: Executive Title -->
+    <!-- Slide 0: OnePaper (Executive Title) -->
     <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070');">
         <div class="overlay-full"></div>
         <div class="slide-content">
@@ -319,46 +417,88 @@
         </div>
     </div>
 
-    <!-- Slide 2: The Concept -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1611974765270-ca1258634369?auto=format&fit=crop&q=80&w=2070');">
+    <!-- Slide 1: PROMPT - Traditional Options -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1579532551690-418b27487587?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">What are <span class="highlight">Traditional</span> Investment Options?</h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                Before we compare, let's discuss where most people park their money safely today.
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">Reveal Answer</button>
+        </div>
+    </div>
+
+    <!-- Slide 2: CONTENT - Traditional Options -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1579532551690-418b27487587?auto=format&fit=crop&q=80&w=2070');">
         <div class="overlay-full"></div>
-        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: flex-start;">
-            <div style="flex: 1;">
-                <h3 class="animate-up">Core Concept</h3>
-                <h2 class="animate-up delay-1">What is a Market?</h2>
-                <p class="animate-up delay-2">
-                    A market is a system where buyers and sellers exchange goods or services.
-                </p>
-                <div class="grid-2x2 animate-up delay-3">
-                    <div class="feature-box">
-                        <strong>Goods Markets</strong>
-                        <span>Physical places (Retail, Grocery) where customers buy products.</span>
+        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: center;">
+             <div style="flex: 1;">
+                <h3 class="animate-up">The Landscape</h3>
+                <h2 class="animate-up delay-1">Traditional Options</h2>
+                <div class="glass-card animate-up delay-2" style="padding: 0;">
+                    <div class="asset-row">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                        <div>
+                            <strong style="color:white;">Savings Accounts</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">2-3% Returns. FDIC Protected.</div>
+                        </div>
+                        <span class="asset-tag tag-safe">Safe</span>
                     </div>
-                    <div class="feature-box">
-                        <strong>Financial Markets</strong>
-                        <span>Platforms (Stock Exchanges) to buy/sell ownership in companies.</span>
+                    <div class="asset-row">
+                        <i class="fa-solid fa-lock"></i>
+                        <div>
+                            <strong style="color:white;">Fixed Deposits</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">4-6% Returns. Locked Period.</div>
+                        </div>
+                        <span class="asset-tag tag-safe">Fixed</span>
                     </div>
-                    <div class="feature-box">
-                        <strong>Price Discovery</strong>
-                        <span>Fair value established by supply and demand dynamics.</span>
+                    <div class="asset-row">
+                        <i class="fa-solid fa-landmark"></i>
+                        <div>
+                            <strong style="color:white;">Govt Bonds</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">Loans to Govt. Low Risk.</div>
+                        </div>
+                        <span class="asset-tag tag-safe">Safe</span>
                     </div>
-                    <div class="feature-box">
-                        <strong>Liquidity</strong>
-                        <span>Ability to convert assets to cash instantly.</span>
+                    <div class="asset-row">
+                        <i class="fa-solid fa-city"></i>
+                        <div>
+                            <strong style="color:white;">Real Estate</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">High capital, hard to sell quickly.</div>
+                        </div>
+                        <span class="asset-tag tag-growth">Illiquid</span>
                     </div>
                 </div>
             </div>
-            <!-- Dynamic Chart Visualization -->
-            <div class="glass-card animate-up delay-3" style="flex: 1; height: 500px; display: flex; align-items: center; justify-content: center;">
-                <div style="width: 100%; height: 100%;">
-                    <h4 style="color:white; margin-bottom: 20px; text-align: center;">Supply vs Demand Logic</h4>
-                    <canvas id="chartSupply"></canvas>
+            
+            <div class="glass-card animate-up delay-3" style="flex: 1; display:flex; flex-direction: column; height: 100%; border-left: 4px solid #ef4444;">
+                <h4 style="color: #ef4444; margin-bottom: 20px;">The Limitations</h4>
+                <ul style="list-style: none; color: #cbd5e1; font-size: 1rem; line-height: 2;">
+                    <li><i class="fa-solid fa-arrow-trend-down" style="color: #ef4444; margin-right: 10px;"></i> <strong>Inflation Risk:</strong> Low returns (3-4%) barely beat inflation, reducing buying power.</li>
+                    <li><i class="fa-solid fa-ban" style="color: #ef4444; margin-right: 10px;"></i> <strong>Liquidity:</strong> Money is often locked (FDs/Real Estate) and hard to access.</li>
+                    <li><i class="fa-solid fa-user-xmark" style="color: #ef4444; margin-right: 10px;"></i> <strong>No Ownership:</strong> You don't own growing companies or share in their high profits.</li>
+                </ul>
+                <div style="margin-top: 20px; flex-grow: 1; min-height: 200px;">
+                    <canvas id="chartAssets"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Slide 3: Banking 101 -->
+    <!-- Slide 3: PROMPT - Banking -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">How do <span class="highlight">Banks</span> Make Money?</h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                If they pay you interest, where does that money come from?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">Let's See</button>
+        </div>
+    </div>
+
+    <!-- Slide 4: CONTENT - Banking 101 -->
     <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&q=80&w=2070');">
         <div class="overlay-full"></div>
         <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: flex-start;">
@@ -392,7 +532,6 @@
                         <i class="fa-solid fa-sack-dollar" style="color: var(--accent); margin-right: 10px;"></i> Banking Model (Spread)
                     </h4>
                     
-                    <!-- Net Interest Margin Visual -->
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
                         <div style="text-align: center;">
                             <div style="font-size: 0.8rem; color: #94a3b8;">Interest Paid</div>
@@ -419,7 +558,169 @@
         </div>
     </div>
 
-    <!-- Slide 4: Detailed Segments Tree -->
+    <!-- Slide 5: PROMPT - Market Basics -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1611974765270-ca1258634369?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">What defines a <span class="highlight">Market</span>?</h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                Is a vegetable market effectively the same as a stock exchange?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">Explore Concept</button>
+        </div>
+    </div>
+
+    <!-- Slide 6: CONTENT - Core Concept -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1611974765270-ca1258634369?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full"></div>
+        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h3 class="animate-up">Core Concept</h3>
+                <h2 class="animate-up delay-1">What is a Market?</h2>
+                <p class="animate-up delay-2">
+                    A market is a system where buyers and sellers exchange goods or services.
+                </p>
+                <div class="grid-2x2 animate-up delay-3">
+                    <div class="feature-box">
+                        <strong>Goods Markets</strong>
+                        <span>Physical places (Retail, Grocery) where customers buy products.</span>
+                    </div>
+                    <div class="feature-box">
+                        <strong>Financial Markets</strong>
+                        <span>Platforms (Stock Exchanges) to buy/sell ownership in companies.</span>
+                    </div>
+                    <div class="feature-box">
+                        <strong>Price Discovery</strong>
+                        <span>Fair value established by supply and demand dynamics.</span>
+                    </div>
+                    <div class="feature-box">
+                        <strong>Liquidity</strong>
+                        <span>Ability to convert assets to cash instantly.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card animate-up delay-3" style="flex: 1; height: 500px; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 100%; height: 100%;">
+                    <h4 style="color:white; margin-bottom: 20px; text-align: center;">Supply vs Demand Logic</h4>
+                    <canvas id="chartSupply"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: PROMPT - Stock Market -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">Why do <span class="highlight">Stocks</span> Exist?</h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                Why would a company sell parts of itself to strangers like us?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">Find Out</button>
+        </div>
+    </div>
+
+    <!-- Slide 8: CONTENT - The Stock Market -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070');">
+         <div class="overlay-full" style="background: linear-gradient(90deg, #0f172a 50%, rgba(15, 23, 42, 0.3) 100%);"></div>
+         <div class="slide-content" style="align-items: flex-start;">
+             <div style="width: 70%;">
+                 <h3 class="animate-up">The Solution</h3>
+                 <h2 class="animate-up delay-1">The Stock Market</h2>
+                 <p class="animate-up delay-2">
+                     The market offers a direct way for investors to potentially earn higher returns by directly owning parts of businesses.
+                 </p>
+                 
+                 <div class="grid-2x2 animate-up delay-3">
+                     <div class="glass-card">
+                         <h4 style="color: var(--accent); margin-bottom: 10px;">Stock Ownership</h4>
+                         <p style="margin:0; font-size: 0.9rem;">Buying a share makes you a <strong>Shareholder</strong>. You own a part of the company (e.g., Apple, Tesla).</p>
+                     </div>
+                     <div class="glass-card">
+                         <h4 style="color: var(--accent); margin-bottom: 10px;">Why Companies Issue</h4>
+                         <p style="margin:0; font-size: 0.9rem;">To raise funds for expansion, new products, or debt repayment without taking loans.</p>
+                     </div>
+                     <div class="glass-card" style="grid-column: span 2;">
+                         <h4 style="color: #34d399; margin-bottom: 10px;">How You Earn</h4>
+                         <div style="display: flex; gap: 40px;">
+                             <div>
+                                 <strong>1. Capital Appreciation</strong><br>
+                                 <span style="font-size: 0.8rem; color: #94a3b8;">Selling shares for more than you paid.</span>
+                             </div>
+                             <div>
+                                 <strong>2. Dividends</strong><br>
+                                 <span style="font-size: 0.8rem; color: #94a3b8;">Portion of company profits paid to you.</span>
+                             </div>
+                          </div>
+                      </div>
+                 </div>
+             </div>
+         </div>
+    </div>
+
+    <!-- Slide 9: PROMPT - Regulation -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">Who protects <span class="highlight">Your Money</span>?</h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                If a broker runs away or a company cheats, who steps in?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">The Regulators</button>
+        </div>
+    </div>
+
+    <!-- Slide 10: CONTENT - Regulation -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full" style="background: linear-gradient(90deg, #0f172a 40%, rgba(15, 23, 42, 0.6) 100%);"></div>
+        <div class="slide-content">
+            <h3 class="animate-up">Ecosystem Trust</h3>
+            <h2 class="animate-up delay-1">Safety & Regulation</h2>
+            
+            <div class="grid-2x2 animate-up delay-2">
+                <div class="glass-card">
+                    <i class="fa-solid fa-gavel" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">SEBI (Est. 1992)</h4>
+                    <p style="font-size: 0.9rem; margin:0;"><strong>Securities and Exchange Board of India.</strong><br>Protects investors, promotes fair markets, and punishes insider trading.</p>
+                </div>
+                
+                <div class="glass-card">
+                    <i class="fa-solid fa-building-columns" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">Exchanges</h4>
+                    <p style="font-size: 0.9rem; margin:0;">
+                        <strong>BSE (1875):</strong> Asia's oldest. 5000+ listed.<br>
+                        <strong>NSE (1992):</strong> Largest volume. Electronic trading.
+                    </p>
+                </div>
+                
+                <div class="glass-card">
+                    <i class="fa-solid fa-vault" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">Depositories</h4>
+                    <p style="font-size: 0.9rem; margin:0;">The Vault (NSDL/CDSL). Holds your shares in digital (Demat) form, preventing theft or damage.</p>
+                </div>
+                
+                <div class="glass-card">
+                    <i class="fa-solid fa-user-tie" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">Brokers</h4>
+                    <p style="font-size: 0.9rem; margin:0;">The Gateway. Registered intermediaries that connect you to the exchange.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: PROMPT - Segments -->
+    <div class="slide" style="background-color: #0f172a;">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">Cash vs <span class="highlight">Derivatives</span></h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                What is the difference between buying an apple and buying a contract for an apple?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">See Architecture</button>
+        </div>
+    </div>
+
+    <!-- Slide 12: CONTENT - Segments -->
     <div class="slide" style="background-color: #0f172a;">
         <div class="slide-content" style="align-items: center; padding-top: 60px;">
             <h3 class="animate-up" style="text-align: center;">Architecture</h3>
@@ -488,137 +789,19 @@
         </div>
     </div>
 
-    <!-- Slide 5: Traditional Investments -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1579532551690-418b27487587?auto=format&fit=crop&q=80&w=2070');">
-        <div class="overlay-full"></div>
-        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: center;">
-             <div style="flex: 1;">
-                <h3 class="animate-up">The Landscape</h3>
-                <h2 class="animate-up delay-1">Traditional Options</h2>
-                <div class="glass-card animate-up delay-2" style="padding: 0;">
-                    <div class="asset-row">
-                        <i class="fa-solid fa-piggy-bank"></i>
-                        <div>
-                            <strong style="color:white;">Savings Accounts</strong>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">2-3% Returns. FDIC Protected.</div>
-                        </div>
-                        <span class="asset-tag tag-safe">Safe</span>
-                    </div>
-                    <div class="asset-row">
-                        <i class="fa-solid fa-lock"></i>
-                        <div>
-                            <strong style="color:white;">Fixed Deposits</strong>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">4-6% Returns. Locked Period.</div>
-                        </div>
-                        <span class="asset-tag tag-safe">Fixed</span>
-                    </div>
-                    <div class="asset-row">
-                        <i class="fa-solid fa-landmark"></i>
-                        <div>
-                            <strong style="color:white;">Govt Bonds</strong>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">Loans to Govt. Low Risk.</div>
-                        </div>
-                        <span class="asset-tag tag-safe">Safe</span>
-                    </div>
-                    <div class="asset-row">
-                        <i class="fa-solid fa-city"></i>
-                        <div>
-                            <strong style="color:white;">Real Estate</strong>
-                            <div style="font-size: 0.8rem; color: #94a3b8;">High capital, hard to sell quickly.</div>
-                        </div>
-                        <span class="asset-tag tag-growth">Illiquid</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="glass-card animate-up delay-3" style="flex: 1; border-left: 4px solid #ef4444;">
-                <h4 style="color: #ef4444; margin-bottom: 20px;">The Limitations</h4>
-                <ul style="list-style: none; color: #cbd5e1; font-size: 1rem; line-height: 2;">
-                    <li><i class="fa-solid fa-arrow-trend-down" style="color: #ef4444; margin-right: 10px;"></i> <strong>Inflation Risk:</strong> Low returns (3-4%) barely beat inflation, reducing buying power.</li>
-                    <li><i class="fa-solid fa-ban" style="color: #ef4444; margin-right: 10px;"></i> <strong>Liquidity:</strong> Money is often locked (FDs/Real Estate) and hard to access.</li>
-                    <li><i class="fa-solid fa-user-xmark" style="color: #ef4444; margin-right: 10px;"></i> <strong>No Ownership:</strong> You don't own growing companies or share in their high profits.</li>
-                </ul>
-            </div>
+    <!-- Slide 13: PROMPT - Index Basics -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">How to measure <span class="highlight">Mood</span>?</h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                If there are 5000 companies, how do we know if the "market" is up or down?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">The Barometer</button>
         </div>
     </div>
 
-    <!-- Slide 6: The Stock Market -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070');">
-         <div class="overlay-full" style="background: linear-gradient(90deg, #0f172a 50%, rgba(15, 23, 42, 0.3) 100%);"></div>
-         <div class="slide-content" style="align-items: flex-start;">
-             <div style="width: 70%;">
-                 <h3 class="animate-up">The Solution</h3>
-                 <h2 class="animate-up delay-1">The Stock Market</h2>
-                 <p class="animate-up delay-2">
-                     The market offers a direct way for investors to potentially earn higher returns by directly owning parts of businesses.
-                 </p>
-                 
-                 <div class="grid-2x2 animate-up delay-3">
-                     <div class="glass-card">
-                         <h4 style="color: var(--accent); margin-bottom: 10px;">Stock Ownership</h4>
-                         <p style="margin:0; font-size: 0.9rem;">Buying a share makes you a <strong>Shareholder</strong>. You own a part of the company (e.g., Apple, Tesla).</p>
-                     </div>
-                     <div class="glass-card">
-                         <h4 style="color: var(--accent); margin-bottom: 10px;">Why Companies Issue</h4>
-                         <p style="margin:0; font-size: 0.9rem;">To raise funds for expansion, new products, or debt repayment without taking loans.</p>
-                     </div>
-                     <div class="glass-card" style="grid-column: span 2;">
-                         <h4 style="color: #34d399; margin-bottom: 10px;">How You Earn</h4>
-                         <div style="display: flex; gap: 40px;">
-                             <div>
-                                 <strong>1. Capital Appreciation</strong><br>
-                                 <span style="font-size: 0.8rem; color: #94a3b8;">Selling shares for more than you paid.</span>
-                             </div>
-                             <div>
-                                 <strong>2. Dividends</strong><br>
-                                 <span style="font-size: 0.8rem; color: #94a3b8;">Portion of company profits paid to you.</span>
-                             </div>
-                         </div>
-                     </div>
-                 </div>
-             </div>
-         </div>
-    </div>
-
-    <!-- Slide 7: Regulation -->
-    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=2070');">
-        <div class="overlay-full" style="background: linear-gradient(90deg, #0f172a 40%, rgba(15, 23, 42, 0.6) 100%);"></div>
-        <div class="slide-content">
-            <h3 class="animate-up">Ecosystem Trust</h3>
-            <h2 class="animate-up delay-1">Safety & Regulation</h2>
-            
-            <div class="grid-2x2 animate-up delay-2">
-                <div class="glass-card">
-                    <i class="fa-solid fa-gavel" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
-                    <h4 style="color:white; margin-bottom: 10px;">SEBI (Est. 1992)</h4>
-                    <p style="font-size: 0.9rem; margin:0;"><strong>Securities and Exchange Board of India.</strong><br>Protects investors, promotes fair markets, and punishes insider trading.</p>
-                </div>
-                
-                <div class="glass-card">
-                    <i class="fa-solid fa-building-columns" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
-                    <h4 style="color:white; margin-bottom: 10px;">Exchanges</h4>
-                    <p style="font-size: 0.9rem; margin:0;">
-                        <strong>BSE (1875):</strong> Asia's oldest. 5000+ listed.<br>
-                        <strong>NSE (1992):</strong> Largest volume. Electronic trading.
-                    </p>
-                </div>
-                
-                <div class="glass-card">
-                    <i class="fa-solid fa-vault" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
-                    <h4 style="color:white; margin-bottom: 10px;">Depositories</h4>
-                    <p style="font-size: 0.9rem; margin:0;">The Vault (NSDL/CDSL). Holds your shares in digital (Demat) form, preventing theft or damage.</p>
-                </div>
-                
-                <div class="glass-card">
-                    <i class="fa-solid fa-user-tie" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
-                    <h4 style="color:white; margin-bottom: 10px;">Brokers</h4>
-                    <p style="font-size: 0.9rem; margin:0;">The Gateway. Registered intermediaries that connect you to the exchange.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Slide 8: What is Index -->
+    <!-- Slide 14: CONTENT - Index Basics -->
     <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2070');">
         <div class="overlay-full"></div>
         <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: center;">
@@ -662,7 +845,19 @@
         </div>
     </div>
 
-    <!-- Slide 9: Major Indices -->
+    <!-- Slide 15: PROMPT - Major Indices -->
+    <div class="slide" style="background-color: #0f172a;">
+        <div class="overlay-full overlay-question"></div>
+        <div class="slide-content" style="text-align: center; align-items: center;">
+            <h1 class="animate-up delay-1">The Big <span class="highlight">Two</span></h1>
+            <p class="animate-up delay-2" style="text-align: center;">
+                You hear NIFTY and SENSEX every day on the news. What are they actually made of?
+            </p>
+            <button onclick="nextSlide()" class="animate-up delay-3" style="margin-top: 30px; padding: 15px 40px; background: var(--accent); color: white; border: none; border-radius: 30px; font-weight: 700; cursor: pointer;">See Composition</button>
+        </div>
+    </div>
+
+    <!-- Slide 16: CONTENT - Major Indices -->
     <div class="slide" style="background-color: #0f172a;">
         <div class="slide-content" style="flex-direction: row; gap: 60px;">
             <div style="flex: 1;">
@@ -712,7 +907,7 @@
         </div>
     </div>
     
-    <!-- Slide 10: Module Complete -->
+    <!-- Slide 17: Module Complete -->
     <div class="slide" style="background-color: #0f172a; text-align: center;">
         <div class="slide-content" style="align-items: center;">
              <i class="fa-solid fa-circle-check animate-up" style="font-size: 5rem; color: var(--accent); margin-bottom: 30px;"></i>
@@ -750,10 +945,31 @@
         });
         
         // Update Sidebar Dots
-        dots.forEach((dot, idx) => {
-            dot.classList.remove('active');
-            if(idx === currentSlide) dot.classList.add('active');
-        });
+        // Since we have more slides than dots now (due to prompts), we need a range check or simplified logic.
+        // Simplified Logic: Highlight the dot if the current slide is the prompt OR the content for that section.
+        // Dot 0: Slide 0
+        // Dot 1: Slides 1, 2
+        // Dot 2: Slides 3, 4
+        // Dot 3: Slides 5, 6
+        // Dot 4: Slides 7, 8
+        // Dot 5: Slides 9, 10
+        // Dot 6: Slides 11, 12
+        // Dot 7: Slides 13, 14
+        // Dot 8: Slides 15, 16
+        // Dot 9: Slide 17
+
+        dots.forEach(dot => dot.classList.remove('active'));
+
+        if(currentSlide === 0) dots[0].classList.add('active');
+        else if(currentSlide >= 1 && currentSlide <= 2) dots[1].classList.add('active');
+        else if(currentSlide >= 3 && currentSlide <= 4) dots[2].classList.add('active');
+        else if(currentSlide >= 5 && currentSlide <= 6) dots[3].classList.add('active');
+        else if(currentSlide >= 7 && currentSlide <= 8) dots[4].classList.add('active');
+        else if(currentSlide >= 9 && currentSlide <= 10) dots[5].classList.add('active');
+        else if(currentSlide >= 11 && currentSlide <= 12) dots[6].classList.add('active');
+        else if(currentSlide >= 13 && currentSlide <= 14) dots[7].classList.add('active');
+        else if(currentSlide >= 15 && currentSlide <= 16) dots[8].classList.add('active');
+        else if(currentSlide === 17) dots[9].classList.add('active');
 
         // Initialize charts if on relevant slides (Performance Optimization)
         if(!chartsInitialized) {
@@ -885,4 +1101,3 @@
 
 </body>
 </html>
-```
