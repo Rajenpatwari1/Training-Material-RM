@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnePaper Executive Training</title>
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #0f172a;      /* Slate 900 */
+            --primary-light: #1e293b; /* Slate 800 */
+            --accent: #3b82f6;       /* Royal Blue */
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(15, 23, 42, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #000;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- Fullscreen Container --- */
+        .deck-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* --- Navigation Sidebar --- */
+        .sidebar {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 80px;
+            background: var(--primary);
+            border-right: 1px solid var(--glass-border);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-mark {
+            width: 40px; height: 40px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 20px;
+            box-shadow: 0 0 20px var(--accent-glow);
+            margin-bottom: 40px;
+        }
+
+        .nav-dots {
+            display: flex; flex-direction: column; gap: 20px;
+        }
+        .nav-dot {
+            width: 10px; height: 10px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .nav-dot:hover { background: white; }
+        .nav-dot.active { 
+            background: var(--accent); 
+            box-shadow: 0 0 10px var(--accent);
+            transform: scale(1.4);
+        }
+        .nav-dot::after {
+            content: attr(data-title);
+            position: absolute;
+            left: 25px; top: -4px;
+            background: white; color: black;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px; font-weight: 700;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .nav-dot:hover::after { opacity: 1; }
+
+        /* --- Slide Logic --- */
+        .slide {
+            position: absolute;
+            top: 0; left: 80px; /* Offset for sidebar */
+            width: calc(100% - 80px); height: 100%;
+            display: none;
+            opacity: 0;
+            transform: scale(1.05);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            background-size: cover;
+            background-position: center;
+            overflow-y: auto; /* SCROLLING ENABLED */
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+            transform: scale(1);
+            z-index: 10;
+        }
+
+        .slide-content {
+            position: relative;
+            z-index: 20;
+            padding: 60px 80px;
+            min-height: 100%; /* Ensures content stretches */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center if content is short */
+            align-items: center;    /* Center horizontally */
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Typography */
+        h1 { font-family: 'Playfair Display', serif; font-size: 5rem; line-height: 1; margin-bottom: 20px; text-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: left; width: 100%; }
+        h2 { font-size: 3rem; font-weight: 700; margin-bottom: 30px; letter-spacing: -1px; text-align: left; width: 100%; }
+        h3 { font-size: 1.5rem; color: var(--accent); font-weight: 600; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; text-align: left; width: 100%; }
+        p { font-size: 1.1rem; line-height: 1.8; color: var(--text-muted); max-width: 800px; margin-bottom: 20px; align-self: flex-start; }
+        
+        .highlight { color: var(--accent); }
+        .overlay-full {
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, #0f172a 0%, rgba(15, 23, 42, 0.95) 50%, rgba(15, 23, 42, 0.7) 100%);
+            z-index: 1;
+        }
+
+        /* --- Updated Tree Diagram (Flexbox Based) --- */
+        .tf-tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 40px;
+            width: 100%;
+        }
+
+        .tf-node {
+            padding: 12px 24px;
+            border-radius: 8px;
+            background: white;
+            color: var(--primary);
+            font-weight: 700;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            min-width: 140px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tf-node:hover { border-color: var(--accent); transform: translateY(-3px); }
+        .tf-node.root { background: var(--accent); color: white; font-size: 1.3rem; }
+        .tf-node span { display: block; font-size: 0.75rem; font-weight: 400; opacity: 0.7; margin-top: 4px; }
+        
+        .tf-children {
+            display: flex;
+            padding-top: 20px;
+            position: relative;
+            justify-content: center;
+            gap: 40px;
+        }
+
+        .tf-child {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Connectors */
+        .tf-child::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid rgba(255,255,255,0.3);
+            height: 20px;
+            width: 0;
+        }
+        .tf-child::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            border-top: 2px solid rgba(255,255,255,0.3);
+            height: 20px;
+            z-index: 1;
+        }
+        .tf-child:first-child::after { left: 50%; width: 50%; }
+        .tf-child:last-child::after { right: 50%; width: 50%; }
+        .tf-child:only-child::after { display: none; }
+        .tf-child:only-child::before { display: block; }
+        
+        /* Parent Connector (Down line from node to children) */
+        .tf-node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .tf-node-wrapper::after {
+            content: '';
+            height: 20px;
+            width: 2px;
+            background: rgba(255,255,255,0.3);
+            display: block; /* Visible only if there are children below */
+        }
+        .tf-node-wrapper:last-child::after { display: none; }
+        .tf-node-wrapper.has-children::after { display: block; }
+
+        /* --- Components --- */
+        .glass-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(20px);
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover { border-color: rgba(255,255,255,0.3); }
+
+        .grid-2x2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; width: 100%;
+        }
+        .feature-box {
+            padding: 20px; border-left: 3px solid var(--accent); background: rgba(255,255,255,0.03);
+        }
+        .feature-box strong { display: block; color: white; margin-bottom: 5px; font-size: 1.1rem; }
+        .feature-box span { font-size: 0.9rem; color: var(--text-muted); }
+
+        .asset-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 15px 20px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .asset-tag { padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: 700; }
+        .tag-safe { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .tag-growth { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+        .tag-risk { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+
+        .modern-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .modern-table th { text-align: left; padding: 15px; border-bottom: 2px solid var(--accent); color: white; }
+        .modern-table td { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); }
+
+        .controls {
+            position: fixed; bottom: 40px; right: 60px; display: flex; gap: 20px; z-index: 100;
+        }
+        .btn-control {
+            width: 60px; height: 60px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);
+            background: var(--primary); color: white; cursor: pointer; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .btn-control:hover { background: white; color: black; border-color: white; }
+
+        /* Animation Classes */
+        .animate-up { opacity: 0; transform: translateY(30px); transition: 0.8s ease-out; }
+        .slide.active .animate-up { opacity: 1; transform: translateY(0); }
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.3s; }
+        .delay-3 { transition-delay: 0.5s; }
+
+    </style>
+</head>
+<body>
+
+<div class="deck-container">
+    
+    <!-- Sidebar Nav -->
+    <div class="sidebar">
+        <div class="logo-mark">M</div>
+        <div class="nav-dots">
+            <div class="nav-dot active" onclick="gotoSlide(0)" data-title="Home"></div>
+            <div class="nav-dot" onclick="gotoSlide(1)" data-title="Market Basics"></div>
+            <div class="nav-dot" onclick="gotoSlide(2)" data-title="Banking 101"></div>
+            <div class="nav-dot" onclick="gotoSlide(3)" data-title="Segments"></div>
+            <div class="nav-dot" onclick="gotoSlide(4)" data-title="Trad. vs Equity"></div>
+            <div class="nav-dot" onclick="gotoSlide(5)" data-title="The Stock Market"></div>
+            <div class="nav-dot" onclick="gotoSlide(6)" data-title="Regulators"></div>
+            <div class="nav-dot" onclick="gotoSlide(7)" data-title="Index Basics"></div>
+            <div class="nav-dot" onclick="gotoSlide(8)" data-title="Major Indices"></div>
+            <div class="nav-dot" onclick="gotoSlide(9)" data-title="Complete"></div>
+        </div>
+    </div>
+
+    <!-- Slide 1: Executive Title -->
+    <div class="slide active" style="background-image: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full"></div>
+        <div class="slide-content">
+            <h3 class="animate-up delay-1">OnePaper</h3>
+            <h1 class="animate-up delay-2">Market <span class="highlight">Fundamentals</span><br>Training Module</h1>
+            <p class="animate-up delay-3">
+                A comprehensive guide to understanding equity mechanics, financial instruments, and the architecture of modern wealth creation.
+            </p>
+            <div class="animate-up delay-3" style="margin-top: 40px; border-left: 2px solid var(--accent); padding-left: 20px;">
+                <span style="display:block; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase;">Prepared For</span>
+                <span style="font-size: 1.1rem; color: white;">Internal Development Team</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: The Concept -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1611974765270-ca1258634369?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full"></div>
+        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h3 class="animate-up">Core Concept</h3>
+                <h2 class="animate-up delay-1">What is a Market?</h2>
+                <p class="animate-up delay-2">
+                    A market is a system where buyers and sellers exchange goods or services.
+                </p>
+                <div class="grid-2x2 animate-up delay-3">
+                    <div class="feature-box">
+                        <strong>Goods Markets</strong>
+                        <span>Physical places (Retail, Grocery) where customers buy products.</span>
+                    </div>
+                    <div class="feature-box">
+                        <strong>Financial Markets</strong>
+                        <span>Platforms (Stock Exchanges) to buy/sell ownership in companies.</span>
+                    </div>
+                    <div class="feature-box">
+                        <strong>Price Discovery</strong>
+                        <span>Fair value established by supply and demand dynamics.</span>
+                    </div>
+                    <div class="feature-box">
+                        <strong>Liquidity</strong>
+                        <span>Ability to convert assets to cash instantly.</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Dynamic Chart Visualization -->
+            <div class="glass-card animate-up delay-3" style="flex: 1; height: 500px; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 100%; height: 100%;">
+                    <h4 style="color:white; margin-bottom: 20px; text-align: center;">Supply vs Demand Logic</h4>
+                    <canvas id="chartSupply"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Banking 101 -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full"></div>
+        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h3 class="animate-up">Financial Pillars</h3>
+                <h2 class="animate-up delay-1">Commercial Banking</h2>
+                <p class="animate-up delay-2">
+                    Banks act as a link between savers and borrowers. While safe, this model limits individual earning potential compared to direct business ownership.
+                </p>
+                
+                <div class="glass-card animate-up delay-3" style="margin-top: 30px;">
+                    <h4 style="color:white; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
+                        <i class="fa-solid fa-building-columns" style="color: var(--accent); margin-right: 10px;"></i> Why Banks Exist
+                    </h4>
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <i class="fa-solid fa-shield-halved" style="color: #34d399; width: 20px;"></i>
+                            <span style="color: var(--text-muted);">Safe place to keep money (FDIC/Insurance)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <i class="fa-solid fa-money-bill-transfer" style="color: #60a5fa; width: 20px;"></i>
+                            <span style="color: var(--text-muted);">Lending to Businesses & Individuals</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="animate-up delay-3" style="flex: 1;">
+                 <div class="glass-card">
+                    <h4 style="color:white; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">
+                        <i class="fa-solid fa-sack-dollar" style="color: var(--accent); margin-right: 10px;"></i> Banking Model (Spread)
+                    </h4>
+                    
+                    <!-- Net Interest Margin Visual -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.8rem; color: #94a3b8;">Interest Paid</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #ef4444;">2-4%</div>
+                            <div style="font-size: 0.7rem; color: #94a3b8;">(To Depositors)</div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right-long" style="color: white; opacity: 0.5;"></i>
+                        <div style="text-align: center; border: 1px solid var(--accent); padding: 5px 10px; border-radius: 4px;">
+                            <div style="font-size: 0.7rem; color: var(--accent); text-transform: uppercase;">Profit</div>
+                        </div>
+                        <i class="fa-solid fa-arrow-right-long" style="color: white; opacity: 0.5;"></i>
+                        <div style="text-align: center;">
+                            <div style="font-size: 0.8rem; color: #94a3b8;">Interest Earned</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #34d399;">6-12%</div>
+                            <div style="font-size: 0.7rem; color: #94a3b8;">(From Loans)</div>
+                        </div>
+                    </div>
+
+                    <p style="font-size: 0.9rem; color: #94a3b8;">
+                        Banks keep the spread to cover costs and pay shareholders. <strong>Depositors earn the minimum.</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Detailed Segments Tree -->
+    <div class="slide" style="background-color: #0f172a;">
+        <div class="slide-content" style="align-items: center; padding-top: 60px;">
+            <h3 class="animate-up" style="text-align: center;">Architecture</h3>
+            <h2 class="animate-up delay-1" style="text-align: center;">Equity Market Segments</h2>
+            
+            <div class="tf-tree animate-up delay-2">
+                <!-- ROOT -->
+                <div class="tf-node-wrapper has-children">
+                    <div class="tf-node root">Equity Market</div>
+                </div>
+
+                <!-- LEVEL 1 CHILDREN -->
+                <div class="tf-children">
+                    
+                    <!-- Branch: CASH -->
+                    <div class="tf-child">
+                        <div class="tf-node-wrapper">
+                            <div class="tf-node">Cash Market<span>Spot / Delivery</span></div>
+                            <!-- Definition Box -->
+                            <div style="margin-top: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; font-size: 0.8rem; width: 200px; text-align: center; color: #cbd5e1;">
+                                Investors own shares directly. Pay full price.
+                                <br><span style="color: #34d399;">Ex: Buy 10 Reliance @ ₹2500</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Branch: DERIVATIVES -->
+                    <div class="tf-child">
+                        <div class="tf-node-wrapper has-children">
+                            <div class="tf-node">Derivatives<span>F & O</span></div>
+                            <!-- Definition Box -->
+                            <div style="margin-top: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; font-size: 0.8rem; width: 220px; text-align: center; color: #cbd5e1;">
+                                Contracts based on underlying price. High leverage & risk.
+                            </div>
+                        </div>
+                        
+                        <!-- LEVEL 2 CHILDREN -->
+                        <div class="tf-children">
+                            
+                            <!-- Branch: FUTURES -->
+                            <div class="tf-child">
+                                <div class="tf-node-wrapper has-children">
+                                    <div class="tf-node">Futures<span>Obligation</span></div>
+                                </div>
+                                <div class="tf-children">
+                                    <div class="tf-child"><div class="tf-node-wrapper"><div class="tf-node" style="font-size: 0.8rem;">Stock</div></div></div>
+                                    <div class="tf-child"><div class="tf-node-wrapper"><div class="tf-node" style="font-size: 0.8rem;">Index</div></div></div>
+                                </div>
+                            </div>
+
+                            <!-- Branch: OPTIONS -->
+                            <div class="tf-child">
+                                <div class="tf-node-wrapper has-children">
+                                    <div class="tf-node">Options<span>Rights</span></div>
+                                </div>
+                                <div class="tf-children">
+                                    <div class="tf-child"><div class="tf-node-wrapper"><div class="tf-node" style="font-size: 0.8rem;">Stock</div></div></div>
+                                    <div class="tf-child"><div class="tf-node-wrapper"><div class="tf-node" style="font-size: 0.8rem;">Index</div></div></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Traditional Investments -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1579532551690-418b27487587?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full"></div>
+        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: center;">
+             <div style="flex: 1;">
+                <h3 class="animate-up">The Landscape</h3>
+                <h2 class="animate-up delay-1">Traditional Options</h2>
+                <div class="glass-card animate-up delay-2" style="padding: 0;">
+                    <div class="asset-row">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                        <div>
+                            <strong style="color:white;">Savings Accounts</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">2-3% Returns. FDIC Protected.</div>
+                        </div>
+                        <span class="asset-tag tag-safe">Safe</span>
+                    </div>
+                    <div class="asset-row">
+                        <i class="fa-solid fa-lock"></i>
+                        <div>
+                            <strong style="color:white;">Fixed Deposits</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">4-6% Returns. Locked Period.</div>
+                        </div>
+                        <span class="asset-tag tag-safe">Fixed</span>
+                    </div>
+                    <div class="asset-row">
+                        <i class="fa-solid fa-landmark"></i>
+                        <div>
+                            <strong style="color:white;">Govt Bonds</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">Loans to Govt. Low Risk.</div>
+                        </div>
+                        <span class="asset-tag tag-safe">Safe</span>
+                    </div>
+                    <div class="asset-row">
+                        <i class="fa-solid fa-city"></i>
+                        <div>
+                            <strong style="color:white;">Real Estate</strong>
+                            <div style="font-size: 0.8rem; color: #94a3b8;">High capital, hard to sell quickly.</div>
+                        </div>
+                        <span class="asset-tag tag-growth">Illiquid</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-card animate-up delay-3" style="flex: 1; border-left: 4px solid #ef4444;">
+                <h4 style="color: #ef4444; margin-bottom: 20px;">The Limitations</h4>
+                <ul style="list-style: none; color: #cbd5e1; font-size: 1rem; line-height: 2;">
+                    <li><i class="fa-solid fa-arrow-trend-down" style="color: #ef4444; margin-right: 10px;"></i> <strong>Inflation Risk:</strong> Low returns (3-4%) barely beat inflation, reducing buying power.</li>
+                    <li><i class="fa-solid fa-ban" style="color: #ef4444; margin-right: 10px;"></i> <strong>Liquidity:</strong> Money is often locked (FDs/Real Estate) and hard to access.</li>
+                    <li><i class="fa-solid fa-user-xmark" style="color: #ef4444; margin-right: 10px;"></i> <strong>No Ownership:</strong> You don't own growing companies or share in their high profits.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: The Stock Market -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2070');">
+         <div class="overlay-full" style="background: linear-gradient(90deg, #0f172a 50%, rgba(15, 23, 42, 0.3) 100%);"></div>
+         <div class="slide-content" style="align-items: flex-start;">
+             <div style="width: 70%;">
+                 <h3 class="animate-up">The Solution</h3>
+                 <h2 class="animate-up delay-1">The Stock Market</h2>
+                 <p class="animate-up delay-2">
+                     The market offers a direct way for investors to potentially earn higher returns by directly owning parts of businesses.
+                 </p>
+                 
+                 <div class="grid-2x2 animate-up delay-3">
+                     <div class="glass-card">
+                         <h4 style="color: var(--accent); margin-bottom: 10px;">Stock Ownership</h4>
+                         <p style="margin:0; font-size: 0.9rem;">Buying a share makes you a <strong>Shareholder</strong>. You own a part of the company (e.g., Apple, Tesla).</p>
+                     </div>
+                     <div class="glass-card">
+                         <h4 style="color: var(--accent); margin-bottom: 10px;">Why Companies Issue</h4>
+                         <p style="margin:0; font-size: 0.9rem;">To raise funds for expansion, new products, or debt repayment without taking loans.</p>
+                     </div>
+                     <div class="glass-card" style="grid-column: span 2;">
+                         <h4 style="color: #34d399; margin-bottom: 10px;">How You Earn</h4>
+                         <div style="display: flex; gap: 40px;">
+                             <div>
+                                 <strong>1. Capital Appreciation</strong><br>
+                                 <span style="font-size: 0.8rem; color: #94a3b8;">Selling shares for more than you paid.</span>
+                             </div>
+                             <div>
+                                 <strong>2. Dividends</strong><br>
+                                 <span style="font-size: 0.8rem; color: #94a3b8;">Portion of company profits paid to you.</span>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+    </div>
+
+    <!-- Slide 7: Regulation -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full" style="background: linear-gradient(90deg, #0f172a 40%, rgba(15, 23, 42, 0.6) 100%);"></div>
+        <div class="slide-content">
+            <h3 class="animate-up">Ecosystem Trust</h3>
+            <h2 class="animate-up delay-1">Safety & Regulation</h2>
+            
+            <div class="grid-2x2 animate-up delay-2">
+                <div class="glass-card">
+                    <i class="fa-solid fa-gavel" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">SEBI (Est. 1992)</h4>
+                    <p style="font-size: 0.9rem; margin:0;"><strong>Securities and Exchange Board of India.</strong><br>Protects investors, promotes fair markets, and punishes insider trading.</p>
+                </div>
+                
+                <div class="glass-card">
+                    <i class="fa-solid fa-building-columns" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">Exchanges</h4>
+                    <p style="font-size: 0.9rem; margin:0;">
+                        <strong>BSE (1875):</strong> Asia's oldest. 5000+ listed.<br>
+                        <strong>NSE (1992):</strong> Largest volume. Electronic trading.
+                    </p>
+                </div>
+                
+                <div class="glass-card">
+                    <i class="fa-solid fa-vault" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">Depositories</h4>
+                    <p style="font-size: 0.9rem; margin:0;">The Vault (NSDL/CDSL). Holds your shares in digital (Demat) form, preventing theft or damage.</p>
+                </div>
+                
+                <div class="glass-card">
+                    <i class="fa-solid fa-user-tie" style="color: var(--accent); font-size: 2rem; margin-bottom: 20px;"></i>
+                    <h4 style="color:white; margin-bottom: 10px;">Brokers</h4>
+                    <p style="font-size: 0.9rem; margin:0;">The Gateway. Registered intermediaries that connect you to the exchange.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: What is Index -->
+    <div class="slide" style="background-image: url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=2070');">
+        <div class="overlay-full"></div>
+        <div class="slide-content" style="flex-direction: row; gap: 50px; align-items: center;">
+            <div style="flex: 1;">
+                <h3 class="animate-up">Market Barometer</h3>
+                <h2 class="animate-up delay-1">What is an Index?</h2>
+                <p class="animate-up delay-2">
+                    An index tracks the performance of a group of stocks to represent the overall market sentiment. It acts as a quick indicator of market health.
+                </p>
+                
+                <div class="glass-card animate-up delay-3" style="margin-top: 30px; display: flex; align-items: center; gap: 20px;">
+                    <div style="width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white;">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                    </div>
+                    <div>
+                        <h4 style="color: white; margin-bottom: 5px;">The Report Card</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Just like a report card shows a student's overall performance, an index shows the market's performance.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="animate-up delay-3" style="flex: 1; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Up Card -->
+                <div class="glass-card" style="display: flex; align-items: center; gap: 20px; border-left: 4px solid #34d399;">
+                    <i class="fa-solid fa-arrow-trend-up" style="font-size: 2.5rem; color: #34d399;"></i>
+                    <div>
+                        <h3 style="color: #34d399; margin: 0; font-size: 1.5rem;">Index Up</h3>
+                        <p style="margin: 0; font-size: 1rem; color: white;">Market Strong / Bullish</p>
+                    </div>
+                </div>
+
+                <!-- Down Card -->
+                <div class="glass-card" style="display: flex; align-items: center; gap: 20px; border-left: 4px solid #ef4444;">
+                    <i class="fa-solid fa-arrow-trend-down" style="font-size: 2.5rem; color: #ef4444;"></i>
+                    <div>
+                        <h3 style="color: #ef4444; margin: 0; font-size: 1.5rem;">Index Down</h3>
+                        <p style="margin: 0; font-size: 1rem; color: white;">Market Weak / Bearish</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Major Indices -->
+    <div class="slide" style="background-color: #0f172a;">
+        <div class="slide-content" style="flex-direction: row; gap: 60px;">
+            <div style="flex: 1;">
+                <h3 class="animate-up">Key Benchmarks</h3>
+                <h2 class="animate-up delay-1">Major Indices</h2>
+                <p class="animate-up delay-2">
+                    India's two primary exchanges, NSE and BSE, have their own flagship indices that the world watches.
+                </p>
+                
+                <table class="modern-table animate-up delay-3">
+                    <thead>
+                        <tr>
+                            <th>Index</th>
+                            <th>Companies</th>
+                            <th>Lot Size</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight:700; color:white;">NIFTY</td>
+                            <td>50</td>
+                            <td>75</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:700; color:white;">SENSEX</td>
+                            <td>30</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:700; color:white;">BANKNIFTY</td>
+                            <td>12</td>
+                            <td>35</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:700; color:white;">FINNIFTY</td>
+                            <td>20</td>
+                            <td>65</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="glass-card animate-up delay-3" style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                <h4 style="color:white; margin-bottom: 20px;">Sector Weightage (NIFTY 50)</h4>
+                <canvas id="chartIndices"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Slide 10: Module Complete -->
+    <div class="slide" style="background-color: #0f172a; text-align: center;">
+        <div class="slide-content" style="align-items: center;">
+             <i class="fa-solid fa-circle-check animate-up" style="font-size: 5rem; color: var(--accent); margin-bottom: 30px;"></i>
+             <h2 class="animate-up delay-1" style="text-align: center;">Module Complete</h2>
+             <p class="animate-up delay-2" style="font-size: 1.2rem; text-align: center; max-width: 100%;">
+                 You have completed <strong>Market Fundamentals 101</strong>.
+             </p>
+             <div class="animate-up delay-3" style="margin-top: 40px; display: flex; gap: 20px;">
+                 <button style="padding: 15px 40px; background: white; color: black; border:none; border-radius: 30px; font-weight: 700; cursor: pointer; font-size: 1rem;">Take Quiz</button>
+                 <button onclick="gotoSlide(0)" style="padding: 15px 40px; background: transparent; color: white; border:1px solid rgba(255,255,255,0.3); border-radius: 30px; font-weight: 700; cursor: pointer; font-size: 1rem;">Restart Module</button>
+             </div>
+        </div>
+    </div>
+
+    <!-- Navigation Arrows -->
+    <div class="controls">
+        <button class="btn-control" onclick="prevSlide()"><i class="fa-solid fa-arrow-left"></i></button>
+        <button class="btn-control" onclick="nextSlide()"><i class="fa-solid fa-arrow-right"></i></button>
+    </div>
+
+</div>
+
+<script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.nav-dot');
+    let chartsInitialized = false;
+
+    // --- Slide Navigation ---
+    function updateState() {
+        // Update Slides
+        slides.forEach((slide, idx) => {
+            slide.classList.remove('active');
+            if(idx === currentSlide) slide.classList.add('active');
+        });
+        
+        // Update Sidebar Dots
+        dots.forEach((dot, idx) => {
+            dot.classList.remove('active');
+            if(idx === currentSlide) dot.classList.add('active');
+        });
+
+        // Initialize charts if on relevant slides (Performance Optimization)
+        if(!chartsInitialized) {
+            initCharts();
+            chartsInitialized = true;
+        }
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % slides.length;
+        updateState();
+    }
+
+    function prevSlide() {
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        updateState();
+    }
+    
+    function gotoSlide(n) {
+        currentSlide = n;
+        updateState();
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+        if(e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+        if(e.key === 'ArrowLeft') prevSlide();
+    });
+
+    // --- Charts ---
+    function initCharts() {
+        const colors = {
+            accent: '#3b82f6',
+            accent2: '#60a5fa',
+            accent3: '#93c5fd',
+            text: '#cbd5e1'
+        };
+
+        // 1. Supply Demand (Line)
+        const ctxSupply = document.getElementById('chartSupply');
+        if (ctxSupply) {
+            new Chart(ctxSupply, {
+                type: 'line',
+                data: {
+                    labels: ['Low Price', '', 'Equilibrium', '', 'High Price'],
+                    datasets: [
+                        {
+                            label: 'Supply',
+                            data: [10, 30, 50, 70, 90],
+                            borderColor: '#10b981',
+                            borderWidth: 3,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Demand',
+                            data: [90, 70, 50, 30, 10],
+                            borderColor: '#ef4444',
+                            borderWidth: 3,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: 'white' } } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { display: false } },
+                        x: { grid: { display: false }, ticks: { color: colors.text } }
+                    }
+                }
+            });
+        }
+
+        // 2. Asset Returns (Bar)
+        const ctxAssets = document.getElementById('chartAssets');
+        if (ctxAssets) {
+            new Chart(ctxAssets, {
+                type: 'bar',
+                data: {
+                    labels: ['Savings', 'Gold', 'Real Estate', 'Equity'],
+                    datasets: [{
+                        label: 'Avg 10Y Return (%)',
+                        data: [5, 8, 9, 14],
+                        backgroundColor: ['#94a3b8', '#fbbf24', '#a855f7', '#3b82f6'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: colors.text } },
+                        x: { grid: { display: false }, ticks: { color: 'white', font: {size: 14} } }
+                    }
+                }
+            });
+        }
+
+        // 3. Indices (Doughnut)
+        const ctxIndices = document.getElementById('chartIndices');
+        if (ctxIndices) {
+            new Chart(ctxIndices, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Finance', 'IT', 'Energy', 'FMCG', 'Auto'],
+                    datasets: [{
+                        data: [35, 15, 14, 9, 6],
+                        backgroundColor: ['#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe', '#dbeafe'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    cutout: '60%',
+                    plugins: { 
+                        legend: { position: 'bottom', labels: { color: 'white', padding: 20 } } 
+                    }
+                }
+            });
+        }
+    }
+
+    // Start
+    updateState();
+
+</script>
+
+</body>
+</html>
+```
